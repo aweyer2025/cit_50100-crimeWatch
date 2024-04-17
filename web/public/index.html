@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chicago Crime Detector</title>
+  <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+<body>
+  <h1>Chicago Crime Tracker 🔎</h1>
+  <form onsubmit="searchLocation(); return false;">
+    <input type="text" id="location" placeholder="Enter Your Address" required>
+    <input type="number" id="radius" placeholder="Enter Search Radius (in miles)" required>
+    <input type="email" id="email" placeholder="Enter Your Email" required>
+    <button type="submit">Submit</button>
+  </form>
+  <h2>Crime Based on Zipcode</h2>
+  <div id="map" style="height: 400px;"></div>
+  <div id="report"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=test&callback=initMap" async defer></script>
+  <script src="js/index.js"></script>
+</body>
+</html>
