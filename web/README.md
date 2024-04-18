@@ -1,2 +1,2 @@
 installs
-npm install express path body-parser fs @google-cloud/pubsub 
+npm install dotenv express path body-parser fs @google-cloud/pubsub 
