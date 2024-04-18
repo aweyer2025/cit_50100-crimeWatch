@@ -1,65 +1,59 @@
 // Import packages
 const express = require('express');
+const app = express();
 const path = require('path');
-const Multer = require('multer');
-const {Storage} = require('@google-cloud/storage');
+const bodyParser = require ('body-parser')
+const {PubSub} = require('@google-cloud/pubsub')
+const { appendFileSynce } = require('fs');
+const { json } = require('body-parser')
 
-  // Set the port
-  const port = 8080;
+//Port
+const port = 8080;
 
-  // Create instances of necessary packages
-  const app = express();
- const storage = new Storage();
- const bucket = storage.bucket('51200-ahmoha-global-uploads');
- 
+//Middleware
+app.use(bodyParser.urlencoded(  { extended: false}));
+app.use(bodyParser.json());
 
-  const Version = process.env.K_REVISION;
-  // Configure an instance of multer
-  const multer = Multer({
-    storage: Multer.memoryStorage(),
-    limits: {
-      fileSize: 15 * 1024 * 1024, 
-    },
-  });
-  // Middleware
-  app.use('/js', express.static(__dirname + '/public/js'));
-  app.use('/css', express.static(__dirname + '/public/css'));
-  app.use('/images', express.static(__dirname + '/public/images'));
+//varible pointing to pubsub topic
+const pubsub_topic = "crime_watch_signup";
 
-
-// Routes
+//routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '/public/index.html'));
 });
 
-app.post('/upload', multer.single('file'),(req, res) => {
-  //ensure a file was uploaded from the form
-  //if not, repond with a simple message and return from this function
-  if (!req.file){
-    res.status(400).send("No file uploaded");
-    return;
-  }
-// this will run if a file is uploaded
-// creating a streaming target where the file will be stored in GCS
 
-const blob = bucket.file(req.file.originalname);
+app.post('/subscribe', async (req, res) =>  {
+  const location = req.body.watch_location;
+  const email = req.body.email_address;
+  const radius = req.body.distance_radius;
+  
 
-// Begin streaming the file to GCS
+  //create a PubSub client
+  const pubSubClient = new PubSub();
 
-const blobStream = blob.createWriteStream();
+  //create message payload
 
-// when the file has uploaded redirect the browser to the homepage
-blobStream.on('finish', ()=> {
-  const uploadedFile = `${bucket.name}/${blob.name}`;
-  console.log(`File uploaded: ${uploadedFile}`);
-  res.redirect('/');
+  const message_data = JSON.stringify({
+    watch_location: location,
+    email_address: email,
+    distance_radius: radius
+    
 
-});
+  });
 
-blobStream.end(req.file.buffer);
+  //create data buffer to stream message to the topic
+  const dataBuffer = Buffer.from(message_data);
+
+  //publish the message to the PubSub topic
+  const messageID = await pubSubClient.topic(pubsub_topic).publishMessage({data: dataBuffer});
+
+  console.log(`Message ID: ${messageID}`);
+
+  res.status(200).send(`You have been subsribed to crime watch <br/> Message ID ${messageID}`);
 
 });
 
 app.listen(port, () => {
-  console.log(`GlobalJags Web App listening on port ${port}`);
+  console.log(`Crime watch is listening on port ${port}`)
 });
