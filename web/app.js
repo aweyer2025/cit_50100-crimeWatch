@@ -1,68 +1,46 @@
-// Import packages
 const express = require('express');
-const app = express();
+const bodyParser = require('body-parser');
+const { PubSub } = require('@google-cloud/pubsub');
 const path = require('path');
-const bodyParser = require ('body-parser')
-const {PubSub} = require('@google-cloud/pubsub')
-const { appendFileSynce } = require('fs');
-const { json } = require('body-parser')
-const dotenv = require('dotenv')
+const dotenv = require('dotenv');
 
-// Load enviroment varibales from .env file
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
-//Port
-const port = 8080;
+const app = express();
+const port = process.env.PORT || 8080;
+const pubsub = new PubSub();
+const topicName = 'user_search_topic';
 
-
-//Middleware
-app.use(bodyParser.urlencoded(  { extended: false}));
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/js', express.static(path.join(__dirname, 'public', 'js')));
-app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
-app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
-
-//varible pointing to pubsub topic
-const pubsub_topic = "crime_watch_signup";
-
-//routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '/public/index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/api/maps-api-key', (req, res) => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+      console.error('API Key not found or not set in .env');
+      return res.status(500).send('API Key not found');
+  }
+  res.send(apiKey);
+});
 
-app.post('/subscribe', async (req, res) =>  {
-  const location = req.body.watch_location;
-  const email = req.body.email_address;
-  const radius = req.body.distance_radius;
-  
+app.post('/submitSearch', async (req, res) => {
+    const messageData = JSON.stringify(req.body);
+    const dataBuffer = Buffer.from(messageData);
 
-  //create a PubSub client
-  const pubSubClient = new PubSub();
-
-  //create message payload
-
-  const message_data = JSON.stringify({
-    watch_location: location,
-    email_address: email,
-    distance_radius: radius
-    
-
-  });
-
-  //create data buffer to stream message to the topic
-  const dataBuffer = Buffer.from(message_data);
-
-  //publish the message to the PubSub topic
-  const messageID = await pubSubClient.topic(pubsub_topic).publishMessage({data: dataBuffer});
-
-  console.log(`Message ID: ${messageID}`);
-
-  res.status(200).send(`You have been subsribed to crime watch <br/> Message ID ${messageID}`);
-
+    try {
+        const messageId = await pubsub.topic(topicName).publishMessage({ data: dataBuffer });
+        console.log(`Message ${messageId} published.`);
+        res.status(200).send('Search data submitted successfully.');
+    } catch (error) {
+        console.error(`Failed to publish message: ${error}`);
+        res.status(500).send('Failed to submit search data.');
+    }
 });
 
 app.listen(port, () => {
-  console.log(`Crime watch is listening on port ${port}`)
+    console.log(`Chicago Crimes Web App listening on port ${port}`);
 });
