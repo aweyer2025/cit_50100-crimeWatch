@@ -41,6 +41,11 @@ app.post('/submitSearch', async (req, res) => {
     }
 });
 
+app.get('/report.hm')
+
 app.listen(port, () => {
     console.log(`Chicago Crimes Web App listening on port ${port}`);
 });
+
+
+
