@@ -1,8 +1,12 @@
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const { PubSub } = require('@google-cloud/pubsub');
 const path = require('path');
 const dotenv = require('dotenv');
+const { queryNearbyCrimes } = require('../gcf2-query/index.js')
+const axios = require('axios')
+
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -34,14 +38,21 @@ app.post('/submitSearch', async (req, res) => {
     try {
         const messageId = await pubsub.topic(topicName).publishMessage({ data: dataBuffer });
         console.log(`Message ${messageId} published.`);
-        res.status(200).send('Search data submitted successfully.');
+
+        //call gcf using Axios
+
+        const response = await axios.post('https://us-central1-chicago-crimes-420200.cloudfunctions.net/crimeQuery',req.body)
+        const results = response.data;
+        console.log(results);
+        res.json(results); // Send JSON response
     } catch (error) {
         console.error(`Failed to publish message: ${error}`);
         res.status(500).send('Failed to submit search data.');
     }
 });
 
-app.get('/report.hm')
+
+
 
 app.listen(port, () => {
     console.log(`Chicago Crimes Web App listening on port ${port}`);

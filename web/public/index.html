@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,12 +9,12 @@
 </head>
 <body>
   <h1>Chicago Crime Tracker 🔎</h1>
-  <form id="searchForm" onsubmit="searchLocation(event)">
+  <form action="/submitSearch" method="post">
     <input type="number" id="latitude" placeholder="Enter Latitude" required step="0.000000001" min="-90" max="90">
     <input type="number" id="longitude" placeholder="Enter Longitude" required step="0.000000001" min="-180" max="180">
     <input type="number" id="radius" placeholder="Enter Search Radius (in miles)" required>
     <input type="email" id="email" placeholder="Enter Your Email" required>
-    <button type="submit">Submit</button>
+    <button type="submit">Search</button>
   </form>
   <div id="map" style="height: 400px;"></div>
   <div id="crime-list" style="margin-top: 20px;"></div>

@@ -1,18 +1,20 @@
+
 const { BigQuery } = require('@google-cloud/bigquery');
 
-exports.queryNearbyCrimes = async (message, context) => {
+exports.queryNearbyCrimes = async (req, res) => {
+  const incoming = Buffer.from(message.data, 'base64').toString('utf-8');
+  const parsedMsg = JSON.parse(incoming);
   try {
     // Create a BigQuery client instance
     const bigquery = new BigQuery();
-    const incoming = Buffer.from(message.data, 'base64').toString('utf-8');
-    const parsedMsg = JSON.parse(incoming);
+    
 
     const latitude=parsedMsg.latitude;
     const longitude = parsedMsg.longitude;
     const radius=parsedMsg.radius;
 
 
-
+    
 
     // Define the SQL query using single quotes
     const query = `
@@ -34,11 +36,28 @@ exports.queryNearbyCrimes = async (message, context) => {
 
     // Run the query using the BigQuery client instance
     const [rows] = await bigquery.query(query);
-    console.log(rows);
+    res.status(200).json(rows);
   } catch (error) {
     console.error(`Error executing query: ${error}`);
+    res.status(500).send('Internal Server Error');
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
